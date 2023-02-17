@@ -3,31 +3,9 @@
 (require "./pegd-syntax.rkt")
 (require "./opt.rkt")
 (require "./env.rkt")
-(require "./boolsolver.rkt")
 (require "./ftable.rkt")
 
 (provide (all-defined-out))
-
-
-
-(define (dpe-exp-null  [e : DPE ] ) : CExp
-       (match e
-        [(p∅)           mkFalse]
-        [(p?)            mkFalse]
-        [(pϵ)            mkTrue]
-        [(pSym _)        mkFalse]
-        [(pVar s)        (mkVar s)]
-        [(pCat p1 p2)    (mkAnd (dpe-exp-null p1) (dpe-exp-null p2))]
-        [(pAlt p1 p2)    (mkOr (dpe-exp-null p1) (dpe-exp-null p2))] ;(tor (dpe-null? v p1) (dpe-null? v p2))]
-        [(pKle _)        mkTrue]
-        [(pNot p)        (mkNot (dpe-exp-null p))] ; This needs not to be lazy here !
-        [_        (error "tried to determine if a peding operation is null !")]
-     )
-  )
-
-(define (dpe-env-null  [v : (ListEnv DPE) ] ) : (ListEnv Boolean)
-      (env-map isTrue? (solve-env (env-map (lambda ([x : DPE])  (dpe-exp-null x)) v)))
-  )
 
 ;
 ;
@@ -42,7 +20,8 @@
         [(δP c (pKle p)) (δ c v (pKle p))]
         [(pCat p1 p2)    (dcat (δ a v p1) (δ a v p2))]
         [(pAlt p1 p2)    (dalt (δ a v p1) (dcat (δ a v (dnot p1)) (δ a v p2)) )]
-        [(pKle p)        (dalt (dcat (δ a v p) (δP a (pKle p)))
+        [(pKle p)        (pϵ)]
+       #;[(pKle p)        (dalt (dcat (δ a v p) (δP a (pKle p)))
                                (dcat (δ a v (dnot p)) (δP a  (pKle p) ) )) ]
         [(pNot p)        (dnot  (DP a (dcat p (pKle (p?)) )) )] ; This needs not to be lazy here ! 
      )
@@ -64,10 +43,12 @@
         [(pAlt p1 p2)    (dalt (d a v p1) (d a v p2) )]
         [(pKle p)        (dalt (dcat (d a v p)  (pKle p) )
                                (dcat (δ a v  p) (DP a (pKle p) ) )) ]
+        ;[(pNot p)        (dnot (d a v p))] ; This needs not to be lazy here ! 
         [(pNot p)        (p∅)] ; This needs not to be lazy here !
         [(DP c p)        (d a v (d c v p))]
      )
   )
+
 
 ; ed stands for expand derivate. It recursively traverses the PEG
 ; and only expands all pendind derivate and delta computations 
@@ -84,6 +65,7 @@
         [e  e]
      )
   )
+
 
 ; Lazyly Expands unevaluated derivates.
 ; Pendind computation are not completly exapand and any
@@ -147,6 +129,10 @@
 ;
 (define (derivate [c : Char] [g : DPEG] ) : DPE
    (iterate-expand (DPEG-dv g) (d c (DPEG-dv g) (DPEG-ds g)))
+  )
+
+(define (derivate-dpe [c : Char] [v : (ListEnv DPE)] [e : DPE] ) : DPE
+   (iterate-expand v (d c v e))
   )
 
 (define (derivate-grammar [c : Char] [g : DPEG] ) : DPEG

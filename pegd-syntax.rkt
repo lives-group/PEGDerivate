@@ -2,6 +2,8 @@
 (require typed-racket-datatype)
 (require "./opt.rkt")
 (require "./env.rkt")
+(require "./ftable.rkt")
+(require "./boolsolver.rkt")
 
 
 (provide DPE
@@ -31,6 +33,11 @@
          alphabet
          alphabet-from-env
          alphabet-from-grammar
+
+         ; Frist table
+         quick-dpe-null?
+         dpeg-first
+         first
 
          ; Pretty print 
          dpe->string
@@ -86,7 +93,7 @@
          [(pSym c)        #f]
          [(pVar s)        #f]
          [(pCat p1 p2)    (or (dpe-pending? p1) (dpe-pending? p2))]
-         [(pAlt p1 p2)    (or (dpe-pending? p2) (dpe-pending? p2))]
+         [(pAlt p1 p2)    (or (dpe-pending? p1) (dpe-pending? p2))]
          [(pKle p)        (dpe-pending? p)]
          [(pNot p)        (dpe-pending? p)]
          [(DP c p)        #t]
@@ -259,6 +266,85 @@
 (define (kle-remove [g : DPEG] ) : DPEG
         (define-values (nat p rs) (kle-rem 0 "k_" null (DPEG-ds g)))
         (DPEG (kle-rem-rules nat "k_" (append (DPEG-dv g) rs)) p )
+  )
+
+
+
+(define (first  [Σ : (Listof Char)] [ l : FTable] [p : DPE]  ) :  (Listof Char)
+     (match p
+        [(p∅)           null]
+        [(p?)            Σ]
+        [(pϵ)            null]
+        [(pSym c)        (list c)]
+        [(pVar s)        (ft-get l s)]
+        [(pCat p1 p2)    (cond [(quick-dpe-null? l p1) (set-union (first Σ l p1) (first Σ l p2))]
+                               [else             (first Σ l p1) ]) ]
+        [(pAlt p1 p2)    (set-union (first Σ l p1) (first Σ l p2))]
+        [(pKle p)        (first Σ l p)]
+        [(pNot p)        (first Σ l p)] 
+        [_               null]
+     )
+  )
+
+
+(define (iterate-first-table  [Σ : (Listof Char)] [ l : FTable]  [v : (ListEnv DPE) ] ) :  FTable
+  (let ([tab : FTable (foldr (lambda ([x : (Pair String DPE)] [t : FTable])  (ft-ins-all t (car x) (first Σ t (cdr x)) ) ) l v) ])
+       (cond [(ft-changed? tab) (iterate-first-table Σ (ft-rst tab) v)]
+             [else tab])
+  )
+)
+
+
+
+
+(define (dpe-exp-null  [e : DPE ] ) : CExp
+       (match e
+        [(p∅)           mkFalse]
+        [(p?)            mkFalse]
+        [(pϵ)            mkTrue]
+        [(pSym _)        mkFalse]
+        [(pVar s)        (mkVar s)]
+        [(pCat p1 p2)    (mkAnd (dpe-exp-null p1) (dpe-exp-null p2))]
+        [(pAlt p1 p2)    (mkOr (dpe-exp-null p1) (dpe-exp-null p2))] ;(tor (dpe-null? v p1) (dpe-null? v p2))]
+        [(pKle _)        mkTrue]
+        [(pNot p)        (mkNot (dpe-exp-null p))] ; This needs not to be lazy here !
+        [_        (error "tried to determine if a peding operation is null !")]
+     )
+  )
+
+(define (dpe-env-null  [v : (ListEnv DPE) ] ) : (ListEnv Boolean)
+      (env-map isTrue? (solve-env (env-map (lambda ([x : DPE])  (dpe-exp-null x)) v)))
+  )
+
+
+(define (ft-from-grm [v : (ListEnv DPE)]) : FTable
+    (let* ([names : (Listof String) (map (lambda ([k : (Pair String DPE)]) (car k)) v)]
+           [tb : FTable (mk-empty-ftable names)]
+           [nll : (Listof (Pair String Boolean))
+                 (dpe-env-null v)])
+           (foldr (lambda ([e : (Pair String Boolean)] [f : FTable]) (ft-set-nullable f (car e) (cdr e))) tb nll)
+     )
+  )
+
+(define (dpeg-first  [ d : DPEG] ) :  FTable
+     (iterate-first-table (alphabet-from-grammar d) (ft-from-grm (DPEG-dv d) ) (DPEG-dv d))
+)
+
+(define (quick-dpe-null?  [ft : FTable ] [e : DPE]) : Boolean
+       (match e
+        [(p∅)           #f]
+        [(p?)            #f]
+        [(pϵ)            #t]
+        [(pSym c)        #f]
+        [(pVar s)        (ft-is-nullable? ft s)]
+        [(pCat p1 p2)    (let ([r : Boolean (quick-dpe-null? ft p1)] )
+                              (cond [r (quick-dpe-null? ft p2)] [else r]))]
+        [(pAlt p1 p2)     (let ([r : Boolean (quick-dpe-null? ft p1)] )
+                               (cond [(not r) (quick-dpe-null? ft p2)] [else r]))] 
+        [(pKle p)        #t]
+        [(pNot p)        (not (quick-dpe-null? ft p))] 
+        [_        (error "tried to determine if a peding operation is null !")]
+     )
   )
 
 

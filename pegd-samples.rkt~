@@ -4,19 +4,6 @@
 (require "./pegd-fderivate.rkt")
 (require "./pegd-input-gen.rkt")
 
-(provide pex0
-         pex1
-         pex2
-         pex3
-         pex4
-         pex5
-         pex6
-         pex7
-         pex8
-         pex9
-         pex10
-         )
-
 ; S <- ab 
 (define pex0 : DPEG
     (DPEG (list (cons "S"  (pCat (pSym #\a) (pSym #\b) )  ))
@@ -95,16 +82,4 @@
 (define pex9 : DPEG
     (DPEG (list (cons "S" (pCat (pNot (pCat (pSym #\a) (pSym #\b))) (pSym #\c) )))
           (pVar "S")) 
-  )
-
-;A <- aAb / e
-;B <- bB  / b
-;C <- c
-; A B C
-(define pex10 : DPEG
-    (DPEG (list (cons "A" (pAlt (pCat  (pCat (pSym #\a) (pVar "A")) (pSym #\b) ) (pSym #\e) ) )
-                (cons "B" (pAlt (pCat (pSym #\b) (pVar "B")) (pSym #\b)))
-                (cons "C" (pSym #\c) )
-           )
-          (pCat (pCat (pVar "A") (pVar "B")) (pVar "C"))) 
   )
