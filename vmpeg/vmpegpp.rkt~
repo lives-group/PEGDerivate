@@ -1,0 +1,26 @@
+#lang racket
+(require redex)
+(require "./vmpeg.rkt")
+()
+
+(define-extended-language VMPPrint VMPeg
+     (PState ::= (Ci Cs PStk))
+     (PStk ::= (PS ...) )
+     (PS ::= N
+            (N N))
+     (PStr ::= (Pat ...))
+     (Pat ::= w N)
+     (PSt := (I N State Prog PStr)) 
+  ) 
+
+(define-metafunction VMPPrint
+   rstStr : PStr N -> PStr  
+   [(rstStr () N)   ()]
+   [(rstStr (Pat Pat_1 ...) 0) (cons w (rstStr (Pat_1 ...) 0)) ]
+   [(rstStr (Pat Pat_1 ...) N) (cons Pat (rstStr (Pat_1 ...) ,(- (term N) 1) ) ) ]
+  )
+
+(define-metafunction VMPPrint
+   cons : Pat PStr -> PStr  
+   [(cons Pat (Pat_2 ...) )   (Pat Pat_2 ...)]
+  )

@@ -1,0 +1,18 @@
+#lang racket
+(require "../pegd-syntax.rkt")
+(require "../pegd-samples.rkt")
+(require "../vmpeg/vmpeg.rkt")
+(require "../env.rkt")
+(require Redex-PEG/peg/lang/peg)
+(require Redex-PEG/peg/lang/smallStepSemantics)
+(require rackcheck)
+
+(define (gen:listchar peg maxLen)
+      (let ([l (alphabet-from-grammar peg)])
+           (gen:list (gen:one-of l) #:max-length maxLen)
+      )
+  )
+
+#;(define-property vm-compile-acc
+  ([id gen-expr] ...)
+  body ...+)

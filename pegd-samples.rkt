@@ -15,6 +15,8 @@
          pex8
          pex9
          pex10
+         pex11
+         pex12
          )
 
 ; S <- ab 
@@ -107,4 +109,15 @@
                 (cons "C" (pSym #\c) )
            )
           (pCat (pCat (pVar "A") (pVar "B")) (pVar "C"))) 
+  )
+
+
+(define pex11 : DPEG
+    (DPEG '()
+          (pNot (pCat (pSym #\a) (pSym #\b)) )) 
+  )
+
+(define pex12 : DPEG
+    (DPEG '()
+          (pNot (pNot (pCat (pSym #\a) (pSym #\b)) )) ) 
   )
