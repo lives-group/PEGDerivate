@@ -94,15 +94,15 @@
           "Choice"
      )
 
-     #;(--> ((Call LB)       Chr (N_i  Cs (S ...)       Cl) Prog Str)
-          ((atI Prog N_lb) Chr (N_lb Cs (N_nxi S ...) Cl) Prog Str)
+     (--> ((Call LB)       Pat (N_i  Cs (PS ...)       PStk) Prog PStr)
+          ((atI Prog N_lb) Pat (N_lb Cs (N_nxi PS ...) PStk) Prog PStr)
           (where N_nxi ,(+ (term N_i) 1))
           (where N_lb  ,(max 0 (+ (term N_i) (term LB))))
           "Call"
      )
      
-     #;(--> (Return         Chr (N_i  Cs (N_r S ...)  Cl) Prog Str)
-          ((atI Prog N_r) Chr (N_r Cs (S ...)      Cl) Prog Str)
+     (--> (Return         Pat (N_i Cs (N_r PS ...)  PStk) Prog Str)
+          ((atI Prog N_r) Pat (N_r Cs (PS ...)      PStk) Prog Str)
           "Ret"
      )
 
@@ -123,8 +123,8 @@
           "Fail"
      )
 
-     (--> (Fail             Pat (N_i  Cs Stk ((N_ibk Cs_bk) PS ... )) Prog PStr)
-          ((atI Prog N_ibk) Pat (N_ibk Cs_bk Stk ((N_ibk Cs_bk) PS ... )) Prog (revStr PStr Cs_bk))
+     (--> (Fail             Pat (N_i   Cs    PStk ((N_ibk Cs_bk) PS ... )) Prog PStr)
+          ((atI Prog N_ibk) Pat (N_ibk Cs_bk PStk ((N_ibk Cs_bk) PS ... )) Prog (revStr PStr Cs_bk))
           "Fail-rev"
      )
 
