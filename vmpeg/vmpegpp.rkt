@@ -57,35 +57,38 @@
 (define vm-red-pp
   (reduction-relation VMPPrint
     #:domain PSt
-    (--> ((Char N)       w                   (N_3 Cs Stk_1 Stk_2)  Prog PStr)
-         ((atI Prog N_1) (rdStr PStr_nw N_2) (N_1 N_2 Stk_1 Stk_2) Prog PStr_nw)
+    (--> ((Char N)       w                   (N_3 Cs  PStk_1 PStk_2) Prog PStr)
+         ((atI Prog N_1) (rdStr PStr_nw N_2) (N_1 N_2 PStk_1 PStk_2) Prog PStr_nw)
          (where N_1 ,(+ (term N_3) 1))
          (where N_2 ,(+ (term Cs) 1))
          (where PStr_nw (wrtStr PStr Cs N))
          "Ch-wrt"
      )
 
-     (--> ((Char N)      N                (N_3 Cs Stk_1 Stk_2)  Prog PStr)
-         ((atI Prog N_1) (rdStr PStr N_2) (N_1 N_2 Stk_1 Stk_2) Prog PStr)
-         (where N_1 ,(+ (term N_3) 1))
-         (where N_2 ,(+ (term Cs) 1))
-         "Ch-match"
+     (--> ((Char N)        N               (N_3 Cs PStk_1 PStk_2)  Prog PStr)
+          ((atI Prog N_1) (rdStr PStr N_2) (N_1 N_2 PStk_1 PStk_2) Prog PStr)
+          (where N_1 ,(+ (term N_3) 1))
+          (where N_2 ,(+ (term Cs) 1))
+          "Ch-match"
      )
 
-     (--> ((Char N_1) Pat (N_3  Cs Stk_1 Stk_2) Prog Str)
-         ( (Char N_1) Pat (Fail Cs Stk_1 Stk_2) Prog Str)
-         (side-condition (not (equal? (term N_1) (term Pat))))
+     (--> ((Char N_1) Pat (N_3  Cs PStk_1 PStk_2) Prog PStr)
+         ( (Char N_1) Pat (Fail Cs PStk_1 PStk_2) Prog PStr)
+         (side-condition (and (not (equal? (term N_1) (term Pat)))
+                              (not (equal? (term Pat) 'w))
+                          )
+          )
          "Ch-Fail"
      )
 
-     (--> ((Jump LB_1)    Pat (N_3 Cs Stk_1 Stk_2) Prog Str)
-          ((atI Prog N_2) Pat (N_2 Cs Stk_1 Stk_2) Prog Str)
+     (--> ((Jump LB_1)    Pat (N_3 Cs PStk_1 PStk_2) Prog PStr)
+          ((atI Prog N_2) Pat (N_2 Cs PStk_1 PStk_2) Prog PStr)
           (where N_2 ,(max 0 (+ (term N_3) (term LB_1))))
           "Jmp"
      )
      
-     (--> ((Choice LB)      Pat (N_i   Cs              (PS ...) Stk_2) Prog Str)
-          ((atI Prog N_nxi) Pat (N_nxi Cs ((N_lb Cs Cl) PS ...) Stk_2) Prog Str)
+     (--> ((Choice LB)      Pat (N_i   Cs (PS ...)           PStk_2) Prog PStr)
+          ((atI Prog N_nxi) Pat (N_nxi Cs ((N_lb Cs) PS ...) PStk_2) Prog PStr)
           (where N_nxi ,(+ (term N_i) 1))
           (where N_lb ,(max 0 (+ (term N_i) (term LB))))
           "Choice"
@@ -103,8 +106,8 @@
           "Ret"
      )
 
-    (--> ((Commit LB)       Pat (N_i   Cs  ((N_ia N_ca) PS ...)  (PS_2 ...)) Prog Str)
-          ((atI Prog N_nxi) Pat (N_nxi Cs  (PS ...)  ((N_ia N_ca) PS_2 ...)) Prog Str)
+    (--> ((Commit LB)       Pat (N_i   Cs  ((N_ia N_ca) PS ...)  (PS_2 ...)) Prog PStr)
+          ((atI Prog N_nxi) Pat (N_nxi Cs  (PS ...)  ((N_ia N_ca) PS_2 ...)) Prog PStr)
           (where N_nxi ,(max 0 (+ (term N_i) (term LB))) )
           "Commit"
      )   
@@ -115,13 +118,13 @@
           "Capture"
      )
 
-     (--> (Fail Pat (N_i  Cs Stk ()) Prog Str)
-          (Fail Pat (Fail Cs Stk ()) Prog Str)
+     (--> (Fail Pat (N_i  Cs PStk ()) Prog PStr)
+          (Fail Pat (Fail Cs PStk ()) Prog PStr)
           "Fail"
      )
 
-     (--> (Fail Pat (N_i  Cs Stk ((N_ibk C_bk) PS ... )) Prog Str)
-          (Fail Pat (Fail Cs Stk ()) Prog Str)
+     (--> (Fail             Pat (N_i  Cs Stk ((N_ibk Cs_bk) PS ... )) Prog PStr)
+          ((atI Prog N_ibk) Pat (N_ibk Cs_bk Stk ((N_ibk Cs_bk) PS ... )) Prog (revStr PStr Cs_bk))
           "Fail-rev"
      )
 
