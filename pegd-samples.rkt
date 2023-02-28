@@ -17,6 +17,7 @@
          pex10
          pex11
          pex12
+         pex13
          )
 
 ; S <- ab 
@@ -120,4 +121,9 @@
 (define pex12 : DPEG
     (DPEG '()
           (pNot (pNot (pCat (pSym #\a) (pSym #\b)) )) ) 
+  )
+
+(define pex13 : DPEG
+    (DPEG '()
+          (pNot (pϵ)) ) 
   )

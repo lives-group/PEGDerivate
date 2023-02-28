@@ -72,6 +72,14 @@
           "Ch-match"
      )
 
+     (--> ((Char N)     (¬ N_n)            (N_3 Cs PStk_1 PStk_2)  Prog PStr)
+          ((atI Prog N_1) (rdStr PStr N_2) (N_1 N_2 PStk_1 PStk_2) Prog PStr)
+          (side-condition (not (equal? (term N_1) (term N_n))))
+          (where N_1 ,(+ (term N_3) 1))
+          (where N_2 ,(+ (term Cs) 1))
+          "Ch-not-match"
+     )
+
      (--> ((Char N_1) Pat (N_3  Cs PStk_1 PStk_2) Prog PStr)
          ( (Char N_1) Pat (Fail Cs PStk_1 PStk_2) Prog PStr)
          (side-condition (and (not (equal? (term N_1) (term Pat)))
@@ -140,4 +148,8 @@
      )
   )
 )
-
+;w w
+;a w
+;      (¬ a) w
+;b w   (¬ a, b)
+;(¬ a ¬ b) w 
