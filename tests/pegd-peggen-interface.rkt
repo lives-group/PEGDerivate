@@ -1,19 +1,21 @@
 #lang typed/racket
 (require "../pegd-syntax.rkt")
 (require "../pegd-derivate.rkt")
-(require "../pegd-input-gen.rkt")
 (require "../env.rkt")
 (require "../ftable.rkt")
 
-(provide (all-defined-out))
+(provide (all-defined-out)
+         gen:peg
+         gen:peg-s)
 
 (require/typed rackcheck
                [#:opaque G gen?]
                [sample (-> G Natural (Listof Any))]
                [gen:natural G]
                [gen:map  (-> G (-> Any Any) G)])
-(require/typed peg-gen
-               [gen:peg (-> Natural Natural Natural G)]
+(require/typed "../../pegwfgen/peg-gen.rkt"
+               [gen:peg   (-> Natural Natural Natural G)]
+               [gen:peg-s (-> Natural Natural Natural Boolean G)]
                )
 
 
@@ -30,6 +32,7 @@
      [_  (DPEG null (p∅))]
   )
 )
+
 
 #;
 (define (import-gen-with-nulls [l : Any]): (Pair DPEG FTable)

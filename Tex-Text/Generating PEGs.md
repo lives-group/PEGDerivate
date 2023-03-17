@@ -12,20 +12,20 @@ to develop a combinator-based generator, one based on the derivative of a PEG an
 
 ## The Problem
 
-The problem seems innocent enough : Given a PEG  $G$ , generate a String (preferable at random) that 
-
-will be accepted by $G$. 
+The problem seems innocent enough : Given a PEG  $G$ , generate a String (preferable at random) that will be accepted by $G$. 
 
 At a first glance this problem seems quite trivial. Consider the PEG $G_{A}$ given below:
+
+
 
  $  \begin{array}{l}
       A \leftarrow aA / . \\
      A
 \end{array}$
 
-Generate a string for the $G_{A}$ is trivial enough that even the methods for the GLC can be used here. 
 
-We start with the non-terminal $A$ and follow the replacement process, i.e replacing the only occurrence of $A$ by the its body. For this grammar this will work :
+
+Generate a string for the $G_{A}$ is trivial enough that even the methods for the GLC can be used here. We start with the non-terminal $A$ and follow the replacement process, i.e replacing the only occurrence of $A$ by the its body. For this grammar this will work :
 
 | PEG  | Action                     |
 | ---- | -------------------------- |
@@ -35,7 +35,7 @@ We start with the non-terminal $A$ and follow the replacement process, i.e repla
 | aaaA | Expand left alternative A  |
 | aaa. | Expand Right alternative A |
 
-This process dos not always work and can produce incorrect results. Consider the grammar $G_B$ 
+This process dos not always work and can produce incorrect results. Consider the grammar $G_B$. 
 
 $
 \begin{array}{l}    
@@ -44,9 +44,33 @@ $
 \end{array}
 $
 
+If we try to use the same method here, we can be misslead into thinking that this PEG consumes all 5 $a$s in a input, since we can generate it. 
+
+| PEG   | Action                     |
+| ----- | -------------------------- |
+| A     |                            |
+| aAa   | Expand left alternative A  |
+| aaAaa | Expand left alternative A  |
+| aaaaa | Expand Right alternative A |
+
+However a good interpreter for PEGs will show that this one only consumes the first 3 $a$s of the input.  A more carefull substituion process can also reveal that:
+
+| PEG               | Action                           |
+| ----------------- | -------------------------------- |
+| A                 |                                  |
+| aAa/a             | Expand variable alternative A    |
+| a(aAa/a)a /a      | Expand variable alternative A    |
+| a(a(aAa/a)a/a)a/a | Expand variable alternative A    |
+| a(aaa/a)a /a      | Resolving inner most alternative |
+| aaaaa /a          | Resolving inner most alternative |
+
 This problem might, at first, look similar to the generation of a sentential form a context free grammar, however we can easily distinguish this problem from that one. 
 
 Suppose that you are given the following PEG, supposed
+
+
+
+$!(a^nb^n)(a/b)*$
 
 ## The Ierusalimschy's Virtual Machine:
 
@@ -153,8 +177,6 @@ Whenever there is white in the input, anything can written to it. If there is ch
 
 Before we move to the formal definition of the semantics considers the following example : 
 
-
-
 $!(ab)ac$
 
 This code wold be compiled as : 
@@ -174,8 +196,6 @@ $Seq$   : **Char** $a$
              **Char** $c$
 
             **End**
-
-
 
 Consider that the input "ab" is presented to this program, under the normal semantics of the machine. In this case the program progress until the instruction **Commit** $N_{fail}$ which removes the backtracking point created by first instruction. The next instruction 
 
@@ -251,8 +271,6 @@ The approach based on the code has one mainly difficulty is to detected the not 
 
 This code wold be compiled as :  
 
-
-
              **Choice** $Seq$
 
              **Choice** $Not$   
@@ -273,6 +291,10 @@ $Seq$   : **Char** $a$
 
             **End**
 
-
-
 In order to the approach works correctly the **Commit** needs to check whether or not there is a backtrack point on the second stack (that will only contain one backtrack point at the time).    
+
+
+
+$!a !b c$
+
+!(aAb) !(bBc)

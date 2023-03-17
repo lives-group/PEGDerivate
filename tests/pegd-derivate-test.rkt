@@ -1,45 +1,45 @@
-#lang typed/racket
+#lang racket
 (require "../pegd-syntax.rkt")
-(require "../pegd-derivate.rkt")
+(require "../pegd-samples.rkt")
 (require "../pegd-input-gen.rkt")
 (require "../env.rkt")
+(require "../opt.rkt")
+(require "./pegd-peggen-interface.rkt")
+(require "./pegsss-interface.rkt")
+;(require peg-gen)
+(require rackcheck)
 
-(require/typed rackcheck
-               [#:opaque G gen?]
-               [sample (-> G Natural (Listof Any))]
-               [gen:natural G])
-(require/typed peg-gen
-               [gen:peg (-> Natural Natural Natural G)])
-
-
-(define (import-gen-peg [l : Any]): DPEG
-   (match l
-     [(list g e ty) (DPEG (import-gen-grm g) (import-gen-exp e))]
-     [_  (DPEG null (p∅))]
+(define (syn-str dg)
+       (map pegchar->nat
+            (opt (lambda (x) x)
+                 (peg-input-syn dg)
+                 (list)))
   )
-)
 
-(define (import-gen-exp [l : Any]): DPE
-   (match l
-     [(list '• ee ed) (pCat (import-gen-exp ee) (import-gen-exp ed))]
-     [(list '/ ee ed) (pAlt (import-gen-exp ee) (import-gen-exp ed))]
-     [(list '* ee) (pKle (import-gen-exp ee))]
-     [(list '! ee) (pNot (import-gen-exp ee))]
-     ['ϵ  (pϵ)]
-     ['∅ (p∅)]
-     [n (cond
-          [ (number? n) (pSym #\0)]
-          [ (symbol? n) (pVar (symbol->string n) )]
-          [ else (error "Error while converting from random generated peg")])]
+(define-property accept-gen
+   ([pegg (gen:peg-s 3 2 2 #f)])
+
+   (let* ([dpeg (import-gen-peg pegg)]
+          [str (syn-str dpeg)] )
+          (begin
+             (display pegg)
+             (cond
+                [(pegSSS-accept? pegg str)  #t]
+                [else (begin (display str) #f)])
+            )
+     )    
   )
-)
 
 
-(define (import-gen-grm [l : Any]): (ListEnv DPE)
-   (match l
-     ['∅  null]
-     [(list v e g) (cond
-                     [(symbol? v) (env-ins (import-gen-grm g) (symbol->string v) (import-gen-exp e) )]
-                     [else (error "Error while converting from random generated peg") ])]
+(define-property always-gen
+   ([pegg (gen:peg-s 3 2 2 #f)])
+   (begin
+     (displayln  pegg)
+     (displayln "----------------------")
+     (syn-str (import-gen-peg pegg)))
   )
-)
+
+
+;(check-property (make-config #:tests 2) accept-gen)
+(define gerror '((A (* 0) ∅) (• ε 0) ((A #t ()))))
+(define gerror2 '((J (* (• 0 ε)) (L (/ (• ε 0) (• J J)) (E (• (/ 0 L) (* 0)) ∅))) (• (/ 0 0) (• E 0)) ((E #t (J L)) (L #t (J)) (J #t ()))))

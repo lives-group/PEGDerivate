@@ -1,24 +1,11 @@
+
 #lang typed/racket
 (require "./pegd-syntax.rkt")
 (require "./pegd-derivate.rkt")
 (require "./pegd-fderivate.rkt")
 (require "./pegd-input-gen.rkt")
 
-(provide pex0
-         pex1
-         pex2
-         pex3
-         pex4
-         pex5
-         pex6
-         pex7
-         pex8
-         pex9
-         pex10
-         pex11
-         pex12
-         pex13
-         )
+(provide  (all-defined-out))
 
 ; S <- ab 
 (define pex0 : DPEG
@@ -54,8 +41,8 @@
          (pCat (pVar "A") (pVar "B" ))) 
   )
 
-; A<- bb*
-; a*b*
+; A<- ab*
+; A
 (define pex5 : DPEG
     (DPEG (list (cons "A" (pCat ( pKle (pSym #\a)) (pSym #\b))))
          (pVar "A")) 
@@ -125,5 +112,24 @@
 
 (define pex13 : DPEG
     (DPEG '()
+          (pCat (pNot (pCat (pSym #\a) (pSym #\b)) )
+                (pCat (pSym #\a) (pSym #\c) )) 
+     ) 
+ )
+
+(define pex14 : DPEG
+    (DPEG '()
+          (pCat (pNot (pSym #\a) )
+                (pCat (pSym #\a) (pSym #\c) )) 
+     ) 
+ )
+
+(define pex15 : DPEG
+    (DPEG '()
           (pNot (pϵ)) ) 
+  )
+
+(define pex16 : DPEG
+    (DPEG '()
+           (pCat (pAlt (pSym #\a) (pCat (pSym #\a) (pSym #\b) ) ) (pSym #\c) ))  
   )

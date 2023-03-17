@@ -1,54 +1,45 @@
 #lang typed/racket
-(require "./pegd-syntax.rkt")
-(require "./pegd-derivate.rkt")
-(require "./pegd-input-gen.rkt")
+(require "../pegd-syntax.rkt")
+(require "../pegd-derivate.rkt")
+(require "../pegd-input-gen.rkt")
+(require "../env.rkt")
 
-; S <- ab 
-(define pex0 : DPEG
-    (DPEG (list (cons "S"  (pCat (pSym #\a) (pSym #\b) )  ))
-          (pVar "S")) 
-  )
-
-; S <- aS / Eps
-(define pex1 : DPEG
-    (DPEG (list (cons "S" (pAlt (pCat (pSym #\a) (pVar "S") ) (pϵ) )))
-         (pVar "S")) 
-  )
-; S <- aSb / ϵ
-(define pex2 : DPEG
-    (DPEG (list (cons "S" (pAlt (pCat (pSym #\a) (pCat (pVar "S") (pSym #\b))) (pϵ))))
-         (pVar "S")) 
-  )
-
-; S <- a*
-(define pex3 : DPEG
-    (DPEG (list (cons "S" (pKle (pSym #\a))) )
-         (pVar "S")) 
-  )
-
-; A <- aA / ϵ
-; B <- bB / c
-; AB
-(define pex4 : DPEG
-    (DPEG (list (cons "A" (pAlt (pCat (pSym #\a) (pVar "A")) (pϵ) ))
-                (cons "B" (pAlt (pCat (pSym #\b) (pVar "B")) (pSym #\c) ))
-               )
-         (pCat (pVar "A") (pVar "B" ))) 
-  )
-
-; A<- bb*
-; a*b*
-(define pex5 : DPEG
-    (DPEG (list (cons "A" (pCat (pSym #\b) ( pKle (pSym #\b)) )))
-         (pCat (pKle (pSym #\a)) (pKle (pSym #\b)) )) 
-  )
+(require/typed rackcheck
+               [#:opaque G gen?]
+               [sample (-> G Natural (Listof Any))]
+               [gen:natural G])
+(require/typed peg-gen
+               [gen:peg (-> Natural Natural Natural G)])
 
 
-; A <- aA / ϵ
-; B <- AB / BA
-; AB
-(define pex6 : DPEG
-    (DPEG (list (cons "A" (pAlt (pCat (pSym #\a) (pVar "A") )  (pϵ) ))
-               (cons "B" (pAlt (pCat (pVar "A") (pVar "B")) (pCat (pVar "B") (pVar "A")))) )
-         (pCat (pVar "A") (pVar "B") )) 
+(define (import-gen-peg [l : Any]): DPEG
+   (match l
+     [(list g e ty) (DPEG (import-gen-grm g) (import-gen-exp e))]
+     [_  (DPEG null (p∅))]
   )
+)
+
+(define (import-gen-exp [l : Any]): DPE
+   (match l
+     [(list '• ee ed) (pCat (import-gen-exp ee) (import-gen-exp ed))]
+     [(list '/ ee ed) (pAlt (import-gen-exp ee) (import-gen-exp ed))]
+     [(list '* ee) (pKle (import-gen-exp ee))]
+     [(list '! ee) (pNot (import-gen-exp ee))]
+     ['ϵ  (pϵ)]
+     ['∅ (p∅)]
+     [n (cond
+          [ (number? n) (pSym #\0)]
+          [ (symbol? n) (pVar (symbol->string n) )]
+          [ else (error "Error while converting from random generated peg")])]
+  )
+)
+
+
+(define (import-gen-grm [l : Any]): (ListEnv DPE)
+   (match l
+     ['∅  null]
+     [(list v e g) (cond
+                     [(symbol? v) (env-ins (import-gen-grm g) (symbol->string v) (import-gen-exp e) )]
+                     [else (error "Error while converting from random generated peg") ])]
+  )
+)
